@@ -118,6 +118,22 @@
             color: #dc2626;
             background: #fee2e2;
         }
+        .edit-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .edit-btn:hover {
+            background: #e0f2fe;
+        }
+        .header-btns {
+            display: flex;
+            gap: 4px;
+        }
         .cluster-name {
             color: #0c4a6e;
             font-size: 1.4em;
@@ -344,7 +360,7 @@
                 </div>
                 <div class="form-group">
                     <label>密码</label>
-                    <input type="text" id="cluster-password" placeholder="登录密码">
+                    <input type="password" id="cluster-password" placeholder="登录密码">
                 </div>
                 <div class="form-group">
                     <label>备注</label>
@@ -404,7 +420,10 @@
                 <div class="cluster-card">
                     <div class="cluster-header">
                         <span class="cluster-id">${escapeHtml(cluster.clusterId || 'CLUSTER-' + (index + 1))}</span>
-                        <button class="delete-btn" onclick="deleteCluster('${cluster.id}')" title="删除">×</button>
+                        <div class="header-btns">
+                            <button class="edit-btn" onclick="openEditModal('${cluster.id}')" title="编辑">✏️</button>
+                            <button class="delete-btn" onclick="deleteCluster('${cluster.id}')" title="删除">×</button>
+                        </div>
                     </div>
                     <div class="cluster-name">${escapeHtml(cluster.name)}</div>
                     <div class="cluster-url">${escapeHtml(cluster.url)}</div>
@@ -421,8 +440,8 @@
                         <div class="cred-row">
                             <span class="cred-label">密码:</span>
                             <span class="cred-value" id="pwd-${cluster.id}">••••••••</span>
-                            <button class="toggle-pwd-btn" onclick="togglePwd('${cluster.id}', '${escapeHtml(cluster.password)}')" title="显示/隐藏">👁</button>
-                            <button class="copy-btn" onclick="copyText('${escapeHtml(cluster.password)}')">复制</button>
+                            <button class="toggle-pwd-btn" data-pwd="${escapeHtml(cluster.password).replace(/"/g, '&quot;')}" onclick="togglePwd(this, '${cluster.id}')" title="显示/隐藏">👁</button>
+                            <button class="copy-btn" data-pwd="${escapeHtml(cluster.password).replace(/"/g, '&quot;')}" onclick="copyPwd(this)" title="复制">复制</button>
                         </div>
                         ` : ''}
                         ${cluster.note ? `
@@ -527,12 +546,18 @@
             });
         }
         
-        // 切换密码显示
-        function togglePwd(id, password) {
+        // 复制密码 (从data属性读取)
+        function copyPwd(btn) {
+            const pwd = btn.getAttribute('data-pwd');
+            copyText(pwd);
+        }
+        
+        // 切换密码显示 (从data属性读取)
+        function togglePwd(btn, id) {
             const el = document.getElementById('pwd-' + id);
-            const btn = el.nextElementSibling;
+            const pwd = btn.getAttribute('data-pwd');
             if (el.textContent === '••••••••') {
-                el.textContent = password;
+                el.textContent = pwd;
                 btn.textContent = '🙈';
             } else {
                 el.textContent = '••••••••';
@@ -574,18 +599,24 @@
                     
                     const existing = getClusters();
                     const merged = [...existing];
+                    let addedCount = 0;
                     
                     imported.forEach(cluster => {
                         if (cluster.id && cluster.name && cluster.url) {
                             const exists = merged.find(c => c.id === cluster.id);
                             if (!exists) {
                                 merged.push(cluster);
+                                addedCount++;
                             }
                         }
                     });
                     
                     saveClusters(merged);
-                    showToast(`已导入 ${imported.length} 个集群`);
+                    if (addedCount === 0) {
+                        showToast('无新集群需要导入（可能已存在）');
+                    } else {
+                        showToast(`已导入 ${addedCount} 个新集群`);
+                    }
                 } catch (err) {
                     showToast('导入失败：' + err.message);
                 }
