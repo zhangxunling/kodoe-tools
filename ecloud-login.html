@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecloud 集群登录导航</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #e0f2fe 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #0369a1;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #0ea5e9;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .header-actions {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            gap: 15px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(14, 165, 233, 0.3);
+        }
+        .btn-secondary {
+            background: #fff;
+            color: #0ea5e9;
+            border: 2px solid #0ea5e9;
+        }
+        .btn-secondary:hover {
+            background: #f0f9ff;
+        }
+        .btn-danger {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 2px solid #fca5a5;
+        }
+        .btn-danger:hover {
+            background: #fecaca;
+        }
+        .cluster-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        .cluster-card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #bae6fd;
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.1);
+        }
+        .cluster-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(14, 165, 233, 0.2);
+            border-color: #7dd3fc;
+        }
+        .cluster-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .cluster-id {
+            color: #0ea5e9;
+            font-size: 0.8em;
+            font-family: monospace;
+            background: #e0f2fe;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .delete-btn:hover {
+            color: #dc2626;
+            background: #fee2e2;
+        }
+        .cluster-name {
+            color: #0c4a6e;
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .cluster-url {
+            color: #64748b;
+            font-size: 0.85em;
+            margin-bottom: 16px;
+            word-break: break-all;
+        }
+        .cluster-creds {
+            background: #f0f9ff;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+        .cred-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .cred-row:last-child {
+            margin-bottom: 0;
+        }
+        .cred-label {
+            color: #64748b;
+            font-size: 0.85em;
+            width: 70px;
+            flex-shrink: 0;
+        }
+        .cred-value {
+            color: #0c4a6e;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .copy-btn {
+            background: #e0f2fe;
+            border: none;
+            color: #0ea5e9;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-left: 8px;
+        }
+        .copy-btn:hover {
+            background: #bae6fd;
+        }
+        .login-btn {
+            display: inline-block;
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 1em;
+        }
+        .login-btn:hover {
+            background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+            box-shadow: 0 5px 20px rgba(14, 165, 233, 0.4);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        .empty-state h3 {
+            color: #0ea5e9;
+            margin-bottom: 10px;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: #fff;
+            border-radius: 16px;
+            padding: 30px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .modal h2 {
+            color: #0c4a6e;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            color: #334155;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #0ea5e9;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 24px;
+        }
+        .modal-actions .btn {
+            flex: 1;
+        }
+        .footer {
+            text-align: center;
+            color: #64748b;
+            margin-top: 50px;
+            font-size: 0.9em;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0c4a6e;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 2000;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>☁️ Ecloud 集群登录导航</h1>
+        <p class="subtitle" id="cluster-count">共 0 个集群</p>
+        
+        <div class="header-actions">
+            <button class="btn btn-primary" onclick="openAddModal()">+ 添加集群</button>
+            <button class="btn btn-secondary" onclick="exportData()">导出数据</button>
+            <button class="btn btn-secondary" onclick="importData()">导入数据</button>
+        </div>
+        
+        <div class="cluster-grid" id="cluster-grid">
+            <!-- 集群卡片将动态生成 -->
+        </div>
+        
+        <div class="empty-state" id="empty-state" style="display: none;">
+            <h3>暂无集群</h3>
+            <p>点击上方"添加集群"按钮开始</p>
+        </div>
+        
+        <div class="footer">
+            <p>数据保存在本地浏览器 · 可导出备份</p>
+        </div>
+    </div>
+
+    <!-- 添加/编辑集群模态框 -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <h2 id="modal-title">添加集群</h2>
+            <form id="cluster-form">
+                <input type="hidden" id="edit-id">
+                <div class="form-group">
+                    <label>集群名称 *</label>
+                    <input type="text" id="cluster-name" placeholder="例如：生产环境-北京" required>
+                </div>
+                <div class="form-group">
+                    <label>集群ID</label>
+                    <input type="text" id="cluster-id" placeholder="例如：BJ-PROD-01">
+                </div>
+                <div class="form-group">
+                    <label>登录地址 *</label>
+                    <input type="url" id="cluster-url" placeholder="https://cluster.example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="cluster-username" placeholder="登录用户名">
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="text" id="cluster-password" placeholder="登录密码">
+                </div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <input type="text" id="cluster-note" placeholder="其他说明">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 隐藏的文件输入 -->
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+
+    <script>
+        const STORAGE_KEY = 'ecloud-clusters';
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            renderClusters();
+        });
+        
+        // 获取集群数据
+        function getClusters() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+        
+        // 保存集群数据
+        function saveClusters(clusters) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(clusters));
+            renderClusters();
+        }
+        
+        // 渲染集群列表
+        function renderClusters() {
+            const clusters = getClusters();
+            const grid = document.getElementById('cluster-grid');
+            const emptyState = document.getElementById('empty-state');
+            const countEl = document.getElementById('cluster-count');
+            
+            countEl.textContent = `共 ${clusters.length} 个集群`;
+            
+            if (clusters.length === 0) {
+                grid.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            grid.innerHTML = clusters.map((cluster, index) => `
+                <div class="cluster-card">
+                    <div class="cluster-header">
+                        <span class="cluster-id">${escapeHtml(cluster.clusterId || 'CLUSTER-' + (index + 1))}</span>
+                        <button class="delete-btn" onclick="deleteCluster('${cluster.id}')" title="删除">×</button>
+                    </div>
+                    <div class="cluster-name">${escapeHtml(cluster.name)}</div>
+                    <div class="cluster-url">${escapeHtml(cluster.url)}</div>
+                    ${cluster.username || cluster.password ? `
+                    <div class="cluster-creds">
+                        ${cluster.username ? `
+                        <div class="cred-row">
+                            <span class="cred-label">用户名:</span>
+                            <span class="cred-value">${escapeHtml(cluster.username)}</span>
+                            <button class="copy-btn" onclick="copyText('${escapeHtml(cluster.username)}')">复制</button>
+                        </div>
+                        ` : ''}
+                        ${cluster.password ? `
+                        <div class="cred-row">
+                            <span class="cred-label">密码:</span>
+                            <span class="cred-value">${escapeHtml(cluster.password)}</span>
+                            <button class="copy-btn" onclick="copyText('${escapeHtml(cluster.password)}')">复制</button>
+                        </div>
+                        ` : ''}
+                        ${cluster.note ? `
+                        <div class="cred-row">
+                            <span class="cred-label">备注:</span>
+                            <span class="cred-value">${escapeHtml(cluster.note)}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ` : ''}
+                    <a href="${escapeHtml(cluster.url)}" class="login-btn" target="_blank">登录入口</a>
+                </div>
+            `).join('');
+        }
+        
+        // HTML转义
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#039;');
+        }
+        
+        // 打开添加模态框
+        function openAddModal() {
+            document.getElementById('modal-title').textContent = '添加集群';
+            document.getElementById('edit-id').value = '';
+            document.getElementById('cluster-form').reset();
+            document.getElementById('modal-overlay').classList.add('active');
+        }
+        
+        // 打开编辑模态框
+        function openEditModal(id) {
+            const clusters = getClusters();
+            const cluster = clusters.find(c => c.id === id);
+            if (!cluster) return;
+            
+            document.getElementById('modal-title').textContent = '编辑集群';
+            document.getElementById('edit-id').value = id;
+            document.getElementById('cluster-name').value = cluster.name;
+            document.getElementById('cluster-id').value = cluster.clusterId || '';
+            document.getElementById('cluster-url').value = cluster.url;
+            document.getElementById('cluster-username').value = cluster.username || '';
+            document.getElementById('cluster-password').value = cluster.password || '';
+            document.getElementById('cluster-note').value = cluster.note || '';
+            document.getElementById('modal-overlay').classList.add('active');
+        }
+        
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('active');
+        }
+        
+        // 表单提交
+        document.getElementById('cluster-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const editId = document.getElementById('edit-id').value;
+            const cluster = {
+                id: editId || Date.now().toString(),
+                name: document.getElementById('cluster-name').value.trim(),
+                clusterId: document.getElementById('cluster-id').value.trim(),
+                url: document.getElementById('cluster-url').value.trim(),
+                username: document.getElementById('cluster-username').value.trim(),
+                password: document.getElementById('cluster-password').value.trim(),
+                note: document.getElementById('cluster-note').value.trim()
+            };
+            
+            const clusters = getClusters();
+            
+            if (editId) {
+                const index = clusters.findIndex(c => c.id === editId);
+                if (index !== -1) {
+                    clusters[index] = cluster;
+                }
+            } else {
+                clusters.push(cluster);
+            }
+            
+            saveClusters(clusters);
+            closeModal();
+            showToast(editId ? '集群已更新' : '集群已添加');
+        });
+        
+        // 删除集群
+        function deleteCluster(id) {
+            if (!confirm('确定要删除这个集群吗？')) return;
+            
+            const clusters = getClusters().filter(c => c.id !== id);
+            saveClusters(clusters);
+            showToast('集群已删除');
+        }
+        
+        // 复制文本
+        function copyText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('已复制到剪贴板');
+            }).catch(() => {
+                showToast('复制失败');
+            });
+        }
+        
+        // 导出数据
+        function exportData() {
+            const clusters = getClusters();
+            const dataStr = JSON.stringify(clusters, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ecloud-clusters-${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('数据已导出');
+        }
+        
+        // 导入数据
+        function importData() {
+            document.getElementById('import-file').click();
+        }
+        
+        // 处理导入
+        function handleImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (!Array.isArray(imported)) {
+                        throw new Error('无效的数据格式');
+                    }
+                    
+                    const existing = getClusters();
+                    const merged = [...existing];
+                    
+                    imported.forEach(cluster => {
+                        if (cluster.id && cluster.name && cluster.url) {
+                            const exists = merged.find(c => c.id === cluster.id);
+                            if (!exists) {
+                                merged.push(cluster);
+                            }
+                        }
+                    });
+                    
+                    saveClusters(merged);
+                    showToast(`已导入 ${imported.length} 个集群`);
+                } catch (err) {
+                    showToast('导入失败：' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+        
+        // 显示提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+        
+        // 点击模态框外部关闭
+        document.getElementById('modal-overlay').addEventListener('click', (e) => {
+            if (e.target.id === 'modal-overlay') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
