@@ -531,7 +531,7 @@
                         ` : ''}
                     </div>
                     ` : ''}
-                    <a href="javascript:void(0)" class="login-btn" onclick="handleLogin('${escapeHtml(cluster.url)}', '${escapeHtml(cluster.password || '')}')">登录入口</a>
+                    <a href="javascript:void(0)" class="login-btn" data-url="${escapeHtml(cluster.url)}" data-pwd="${btoa(cluster.password || '')}" onclick="handleLogin(this)">登录入口</a>
                 </div>
             `).join('');
         }
@@ -645,7 +645,11 @@
         }
         
         // 处理登录跳转
-        function handleLogin(url, password) {
+        function handleLogin(btn) {
+            const url = btn.getAttribute('data-url');
+            const pwdBase64 = btn.getAttribute('data-pwd');
+            const password = pwdBase64 ? atob(pwdBase64) : '';
+            
             if (password) {
                 navigator.clipboard.writeText(password).then(() => {
                     showToast('密码已复制，即将跳转...');
