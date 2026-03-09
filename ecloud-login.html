@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ecloud 集群登录导航</title>
+    <title>七牛云存储 Ecloud 聚合平台</title>
     <style>
         * {
             margin: 0;
@@ -12,111 +12,152 @@
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #e0f2fe 100%);
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
             min-height: 100vh;
             padding: 40px 20px;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+            pointer-events: none;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
         h1 {
             text-align: center;
-            color: #0369a1;
-            margin-bottom: 10px;
-            font-size: 2.2em;
+            color: #f1f5f9;
+            margin-bottom: 8px;
+            font-size: 2.4em;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            text-shadow: 0 0 40px rgba(56, 189, 248, 0.3);
         }
         .subtitle {
             text-align: center;
-            color: #0ea5e9;
-            margin-bottom: 30px;
-            font-size: 1.1em;
+            color: #64748b;
+            margin-bottom: 40px;
+            font-size: 1em;
         }
         .header-actions {
             display: flex;
             justify-content: center;
-            margin-bottom: 30px;
-            gap: 15px;
+            margin-bottom: 40px;
+            gap: 12px;
+            flex-wrap: wrap;
         }
         .btn {
             padding: 12px 24px;
             border: none;
-            border-radius: 8px;
-            font-size: 1em;
+            border-radius: 12px;
+            font-size: 0.95em;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            backdrop-filter: blur(10px);
         }
         .btn-primary {
-            background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
             color: #fff;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
         }
         .btn-primary:hover {
-            background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(14, 165, 233, 0.3);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.5);
         }
         .btn-secondary {
-            background: #fff;
-            color: #0ea5e9;
-            border: 2px solid #0ea5e9;
+            background: rgba(255, 255, 255, 0.05);
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .btn-secondary:hover {
-            background: #f0f9ff;
+            background: rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+            border-color: rgba(255, 255, 255, 0.2);
         }
         .btn-danger {
-            background: #fee2e2;
-            color: #dc2626;
-            border: 2px solid #fca5a5;
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
         .btn-danger:hover {
-            background: #fecaca;
+            background: rgba(239, 68, 68, 0.2);
         }
         .cluster-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 24px;
         }
         .cluster-card {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid #bae6fd;
-            border-radius: 16px;
-            padding: 24px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.1);
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 28px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+        .cluster-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+            opacity: 0;
+            transition: opacity 0.3s;
         }
         .cluster-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(14, 165, 233, 0.2);
-            border-color: #7dd3fc;
+            transform: translateY(-8px);
+            border-color: rgba(139, 92, 246, 0.3);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.4),
+                0 0 60px rgba(139, 92, 246, 0.1);
+        }
+        .cluster-card:hover::before {
+            opacity: 1;
         }
         .cluster-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
         }
         .cluster-id {
-            color: #0ea5e9;
-            font-size: 0.8em;
-            font-family: monospace;
-            background: #e0f2fe;
-            padding: 4px 8px;
-            border-radius: 4px;
+            color: #8b5cf6;
+            font-size: 0.75em;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            background: rgba(139, 92, 246, 0.15);
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(139, 92, 246, 0.2);
         }
         .delete-btn {
             background: none;
             border: none;
-            color: #94a3b8;
+            color: #64748b;
             cursor: pointer;
             font-size: 1.2em;
             padding: 4px;
-            border-radius: 4px;
+            border-radius: 6px;
             transition: all 0.2s;
         }
         .delete-btn:hover {
-            color: #dc2626;
-            background: #fee2e2;
+            color: #f87171;
+            background: rgba(239, 68, 68, 0.1);
         }
         .edit-btn {
             background: none;
@@ -124,78 +165,85 @@
             cursor: pointer;
             font-size: 1em;
             padding: 4px;
-            border-radius: 4px;
+            border-radius: 6px;
             transition: all 0.2s;
         }
         .edit-btn:hover {
-            background: #e0f2fe;
+            background: rgba(59, 130, 246, 0.1);
         }
         .header-btns {
             display: flex;
             gap: 4px;
         }
         .cluster-name {
-            color: #0c4a6e;
-            font-size: 1.4em;
-            font-weight: 600;
-            margin-bottom: 8px;
+            color: #f1f5f9;
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.01em;
         }
         .cluster-url {
             color: #64748b;
             font-size: 0.85em;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
             word-break: break-all;
+            font-family: 'SF Mono', 'Fira Code', monospace;
         }
         .cluster-creds {
-            background: #f0f9ff;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
         .cred-row {
             display: flex;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
         .cred-row:last-child {
             margin-bottom: 0;
         }
         .cred-label {
             color: #64748b;
-            font-size: 0.85em;
+            font-size: 0.8em;
             width: 70px;
             flex-shrink: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
         .cred-value {
-            color: #0c4a6e;
-            font-family: monospace;
+            color: #e2e8f0;
+            font-family: 'SF Mono', 'Fira Code', monospace;
             font-size: 0.9em;
         }
         .copy-btn {
-            background: #e0f2fe;
+            background: rgba(59, 130, 246, 0.15);
             border: none;
-            color: #0ea5e9;
-            padding: 4px 8px;
-            border-radius: 4px;
+            color: #60a5fa;
+            padding: 4px 10px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 0.8em;
+            font-size: 0.75em;
             margin-left: 8px;
+            transition: all 0.2s;
         }
         .copy-btn:hover {
-            background: #bae6fd;
+            background: rgba(59, 130, 246, 0.25);
         }
         .toggle-pwd-btn {
-            background: #e0f2fe;
+            background: rgba(139, 92, 246, 0.15);
             border: none;
-            color: #0ea5e9;
+            color: #a78bfa;
             padding: 4px 8px;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 0.8em;
             margin-left: 4px;
+            transition: all 0.2s;
         }
         .toggle-pwd-btn:hover {
-            background: #bae6fd;
+            background: rgba(139, 92, 246, 0.25);
         }
         .password-hidden {
             letter-spacing: 2px;
@@ -203,28 +251,31 @@
         .login-btn {
             display: inline-block;
             width: 100%;
-            padding: 14px 20px;
-            background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
             color: #fff;
             text-decoration: none;
-            border-radius: 10px;
-            font-weight: 600;
+            border-radius: 12px;
+            font-weight: 700;
             text-align: center;
-            transition: all 0.3s ease;
-            font-size: 1em;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.95em;
+            letter-spacing: 0.02em;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
         }
         .login-btn:hover {
-            background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
-            box-shadow: 0 5px 20px rgba(14, 165, 233, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
         }
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
+            padding: 80px 20px;
             color: #64748b;
         }
         .empty-state h3 {
-            color: #0ea5e9;
-            margin-bottom: 10px;
+            color: #94a3b8;
+            margin-bottom: 12px;
+            font-size: 1.3em;
         }
         
         /* Modal */
@@ -235,7 +286,8 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
             z-index: 1000;
             justify-content: center;
             align-items: center;
@@ -244,52 +296,62 @@
             display: flex;
         }
         .modal {
-            background: #fff;
-            border-radius: 16px;
-            padding: 30px;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 36px;
             width: 90%;
-            max-width: 450px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 480px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
         }
         .modal h2 {
-            color: #0c4a6e;
-            margin-bottom: 20px;
-            font-size: 1.5em;
+            color: #f1f5f9;
+            margin-bottom: 24px;
+            font-size: 1.6em;
+            font-weight: 700;
         }
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
         .form-group label {
             display: block;
-            color: #334155;
-            margin-bottom: 6px;
+            color: #94a3b8;
+            margin-bottom: 8px;
             font-weight: 500;
+            font-size: 0.9em;
         }
         .form-group input {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
+            padding: 14px 16px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
             font-size: 1em;
-            transition: border-color 0.2s;
+            transition: all 0.2s;
+            color: #f1f5f9;
         }
         .form-group input:focus {
             outline: none;
-            border-color: #0ea5e9;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .form-group input::placeholder {
+            color: #475569;
         }
         .modal-actions {
             display: flex;
-            gap: 10px;
-            margin-top: 24px;
+            gap: 12px;
+            margin-top: 28px;
         }
         .modal-actions .btn {
             flex: 1;
+            padding: 14px 20px;
         }
         .footer {
             text-align: center;
-            color: #64748b;
-            margin-top: 50px;
-            font-size: 0.9em;
+            color: #475569;
+            margin-top: 60px;
+            font-size: 0.85em;
         }
         
         /* Toast */
@@ -298,22 +360,39 @@
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            background: #0c4a6e;
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #f1f5f9;
+            padding: 14px 28px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: all 0.3s;
             z-index: 2000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
         }
         .toast.show {
             opacity: 1;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>☁️ Ecloud 集群登录导航</h1>
+        <h1>☁️ 七牛云存储 Ecloud 聚合平台</h1>
         <p class="subtitle" id="cluster-count">共 0 个集群</p>
         
         <div class="header-actions">
@@ -452,7 +531,7 @@
                         ` : ''}
                     </div>
                     ` : ''}
-                    <a href="${escapeHtml(cluster.url)}" class="login-btn" target="_blank">登录入口</a>
+                    <a href="javascript:void(0)" class="login-btn" onclick="handleLogin('${escapeHtml(cluster.url)}', '${escapeHtml(cluster.password || '')}')">登录入口</a>
                 </div>
             `).join('');
         }
@@ -562,6 +641,23 @@
             } else {
                 el.textContent = '••••••••';
                 btn.textContent = '👁';
+            }
+        }
+        
+        // 处理登录跳转
+        function handleLogin(url, password) {
+            if (password) {
+                navigator.clipboard.writeText(password).then(() => {
+                    showToast('密码已复制，即将跳转...');
+                    setTimeout(() => {
+                        window.open(url, '_blank');
+                    }, 500);
+                }).catch(() => {
+                    // 复制失败，直接跳转
+                    window.open(url, '_blank');
+                });
+            } else {
+                window.open(url, '_blank');
             }
         }
         
