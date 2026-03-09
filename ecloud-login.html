@@ -168,6 +168,22 @@
         .copy-btn:hover {
             background: #bae6fd;
         }
+        .toggle-pwd-btn {
+            background: #e0f2fe;
+            border: none;
+            color: #0ea5e9;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-left: 4px;
+        }
+        .toggle-pwd-btn:hover {
+            background: #bae6fd;
+        }
+        .password-hidden {
+            letter-spacing: 2px;
+        }
         .login-btn {
             display: inline-block;
             width: 100%;
@@ -404,7 +420,8 @@
                         ${cluster.password ? `
                         <div class="cred-row">
                             <span class="cred-label">密码:</span>
-                            <span class="cred-value">${escapeHtml(cluster.password)}</span>
+                            <span class="cred-value" id="pwd-${cluster.id}">••••••••</span>
+                            <button class="toggle-pwd-btn" onclick="togglePwd('${cluster.id}', '${escapeHtml(cluster.password)}')" title="显示/隐藏">👁</button>
                             <button class="copy-btn" onclick="copyText('${escapeHtml(cluster.password)}')">复制</button>
                         </div>
                         ` : ''}
@@ -508,6 +525,19 @@
             }).catch(() => {
                 showToast('复制失败');
             });
+        }
+        
+        // 切换密码显示
+        function togglePwd(id, password) {
+            const el = document.getElementById('pwd-' + id);
+            const btn = el.nextElementSibling;
+            if (el.textContent === '••••••••') {
+                el.textContent = password;
+                btn.textContent = '🙈';
+            } else {
+                el.textContent = '••••••••';
+                btn.textContent = '👁';
+            }
         }
         
         // 导出数据
