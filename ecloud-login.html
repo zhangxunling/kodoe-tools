@@ -519,8 +519,8 @@
                         <div class="cred-row">
                             <span class="cred-label">密码:</span>
                             <span class="cred-value" id="pwd-${cluster.id}">••••••••</span>
-                            <button class="toggle-pwd-btn" data-pwd="${escapeHtml(cluster.password).replace(/"/g, '&quot;')}" onclick="togglePwd(this, '${cluster.id}')" title="显示/隐藏">👁</button>
-                            <button class="copy-btn" data-pwd="${escapeHtml(cluster.password).replace(/"/g, '&quot;')}" onclick="copyPwd(this)" title="复制">复制</button>
+                            <button class="toggle-pwd-btn" data-pwd="${btoa(cluster.password || '')}" onclick="togglePwd(this, '${cluster.id}')" title="显示/隐藏">👁</button>
+                            <button class="copy-btn" data-pwd="${btoa(cluster.password || '')}" onclick="copyPwd(this)" title="复制">复制</button>
                         </div>
                         ` : ''}
                         ${cluster.note ? `
@@ -634,7 +634,8 @@
         // 切换密码显示 (从data属性读取)
         function togglePwd(btn, id) {
             const el = document.getElementById('pwd-' + id);
-            const pwd = btn.getAttribute('data-pwd');
+            const pwdBase64 = btn.getAttribute('data-pwd');
+            const pwd = pwdBase64 ? atob(pwdBase64) : '';
             if (el.textContent === '••••••••') {
                 el.textContent = pwd;
                 btn.textContent = '🙈';
