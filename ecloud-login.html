@@ -506,29 +506,12 @@
                     </div>
                     <div class="cluster-name">${escapeHtml(cluster.name)}</div>
                     <div class="cluster-url">${escapeHtml(cluster.url)}</div>
-                    ${cluster.username || cluster.password ? `
+                    ${cluster.note ? `
                     <div class="cluster-creds">
-                        ${cluster.username ? `
-                        <div class="cred-row">
-                            <span class="cred-label">用户名:</span>
-                            <span class="cred-value">${escapeHtml(cluster.username)}</span>
-                            <button class="copy-btn" onclick="copyText('${escapeHtml(cluster.username)}')">复制</button>
-                        </div>
-                        ` : ''}
-                        ${cluster.password ? `
-                        <div class="cred-row">
-                            <span class="cred-label">密码:</span>
-                            <span class="cred-value" id="pwd-${cluster.id}">••••••••</span>
-                            <button class="toggle-pwd-btn" data-pwd="${btoa(encodeURIComponent(cluster.password || ''))}" onclick="togglePwd(this, '${cluster.id}')" title="显示/隐藏">👁</button>
-                            <button class="copy-btn" data-pwd="${btoa(encodeURIComponent(cluster.password || ''))}" onclick="copyPwd(this)" title="复制">复制</button>
-                        </div>
-                        ` : ''}
-                        ${cluster.note ? `
                         <div class="cred-row">
                             <span class="cred-label">备注:</span>
                             <span class="cred-value">${escapeHtml(cluster.note)}</span>
                         </div>
-                        ` : ''}
                     </div>
                     ` : ''}
                     <a href="${cluster.url}" class="login-btn" target="_blank" rel="noopener noreferrer" data-pwd="${btoa(encodeURIComponent(cluster.password || ''))}" onclick="return handleLogin(this)">登录入口</a>
