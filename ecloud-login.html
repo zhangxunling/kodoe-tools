@@ -41,31 +41,46 @@
             gap: 12px;
             flex-wrap: wrap;
         }
-        .region-tabs {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
+        .region-group {
+            margin-bottom: 16px;
         }
-        .region-tab {
-            padding: 8px 20px;
-            border: 1px solid #d1d5db;
-            border-radius: 20px;
+        .region-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
             background: #fff;
-            color: #64748b;
-            font-size: 0.9em;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
+            user-select: none;
         }
-        .region-tab:hover {
+        .region-header:hover {
             border-color: #3b82f6;
-            color: #3b82f6;
         }
-        .region-tab.active {
-            background: #3b82f6;
-            border-color: #3b82f6;
-            color: #fff;
+        .region-header .arrow {
+            color: #64748b;
+            font-size: 0.8em;
+            transition: transform 0.2s;
+        }
+        .region-header.collapsed .arrow {
+            transform: rotate(-90deg);
+        }
+        .region-header .region-name {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1em;
+        }
+        .region-header .region-count {
+            color: #64748b;
+            font-size: 0.85em;
+        }
+        .region-clusters {
+            padding: 8px 0 0 24px;
+        }
+        .region-clusters.collapsed {
+            display: none;
         }
         .btn {
             padding: 12px 24px;
@@ -411,13 +426,8 @@
             <button class="btn btn-secondary" onclick="importData()">导入数据</button>
         </div>
         
-        <!-- 区域标签页 -->
-        <div class="region-tabs" id="region-tabs">
-            <button class="region-tab active" data-region="all" onclick="switchRegion('all')">全部</button>
-        </div>
-        
-        <div class="cluster-grid" id="cluster-grid">
-            <!-- 集群卡片将动态生成 -->
+        <div id="cluster-container">
+            <!-- 按区域分组的集群列表 -->
         </div>
         
         <div class="empty-state" id="empty-state" style="display: none;">
@@ -481,7 +491,7 @@
 
     <script>
         const STORAGE_KEY = 'ecloud-clusters';
-        let currentRegion = 'all';
+        const COLLAPSED_KEY = 'ecloud-collapsed-regions';
         
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
@@ -500,6 +510,30 @@
             renderClusters();
         }
         
+        // 获取折叠状态
+        function getCollapsedRegions() {
+            const data = localStorage.getItem(COLLAPSED_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+        
+        // 保存折叠状态
+        function saveCollapsedRegions(regions) {
+            localStorage.setItem(COLLAPSED_KEY, JSON.stringify(regions));
+        }
+        
+        // 切换区域折叠
+        function toggleRegion(region) {
+            const collapsed = getCollapsedRegions();
+            const index = collapsed.indexOf(region);
+            if (index === -1) {
+                collapsed.push(region);
+            } else {
+                collapsed.splice(index, 1);
+            }
+            saveCollapsedRegions(collapsed);
+            renderClusters();
+        }
+        
         // 获取所有区域
         function getRegions() {
             const clusters = getClusters();
@@ -507,76 +541,76 @@
             return regions.sort();
         }
         
-        // 切换区域
-        function switchRegion(region) {
-            currentRegion = region;
-            // 更新标签页状态
-            document.querySelectorAll('.region-tab').forEach(tab => {
-                tab.classList.toggle('active', tab.dataset.region === region);
-            });
-            renderClusterList();
-        }
-        
-        // 渲染区域标签页
-        function renderRegionTabs() {
-            const regions = getRegions();
-            const tabsContainer = document.getElementById('region-tabs');
-            
-            let html = `<button class="region-tab ${currentRegion === 'all' ? 'active' : ''}" data-region="all" onclick="switchRegion('all')">全部</button>`;
-            regions.forEach(region => {
-                html += `<button class="region-tab ${currentRegion === region ? 'active' : ''}" data-region="${escapeHtml(region)}" onclick="switchRegion('${escapeHtml(region)}')">${escapeHtml(region)}</button>`;
-            });
-            
-            tabsContainer.innerHTML = html;
-            
-            // 更新区域下拉建议
-            const datalist = document.getElementById('region-list');
-            datalist.innerHTML = regions.map(r => `<option value="${escapeHtml(r)}">`).join('');
-        }
-        
         // 渲染集群列表
-        function renderClusterList() {
+        function renderClusters() {
             const clusters = getClusters();
-            const filteredClusters = currentRegion === 'all' 
-                ? clusters 
-                : clusters.filter(c => c.region === currentRegion);
-            
-            const grid = document.getElementById('cluster-grid');
+            const regions = getRegions();
+            const collapsed = getCollapsedRegions();
+            const container = document.getElementById('cluster-container');
             const emptyState = document.getElementById('empty-state');
             const countEl = document.getElementById('cluster-count');
             
             countEl.textContent = `共 ${clusters.length} 个集群`;
             
-            if (filteredClusters.length === 0) {
-                grid.innerHTML = '';
+            if (clusters.length === 0) {
+                container.innerHTML = '';
                 emptyState.style.display = 'block';
                 return;
             }
             
             emptyState.style.display = 'none';
-            grid.innerHTML = filteredClusters.map((cluster, index) => `
-                <div class="cluster-card">
-                    <div class="cluster-header">
-                        <span class="cluster-id">${escapeHtml(cluster.clusterId || 'CLUSTER-' + (index + 1))}</span>
-                        <div class="header-btns">
-                            <button class="edit-btn" onclick="openEditModal('${cluster.id}')" title="编辑">✏️</button>
-                            <button class="delete-btn" onclick="deleteCluster('${cluster.id}')" title="删除">×</button>
+            
+            // 按区域分组
+            const grouped = {};
+            clusters.forEach(cluster => {
+                const region = cluster.region || '未分类';
+                if (!grouped[region]) grouped[region] = [];
+                grouped[region].push(cluster);
+            });
+            
+            // 排序区域
+            const sortedRegions = Object.keys(grouped).sort((a, b) => {
+                if (a === '未分类') return 1;
+                if (b === '未分类') return -1;
+                return a.localeCompare(b, 'zh-CN');
+            });
+            
+            let html = '';
+            sortedRegions.forEach(region => {
+                const regionClusters = grouped[region];
+                const isCollapsed = collapsed.includes(region);
+                
+                html += `
+                    <div class="region-group">
+                        <div class="region-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleRegion('${escapeHtml(region)}')">
+                            <span class="arrow">▼</span>
+                            <span class="region-name">${escapeHtml(region)}</span>
+                            <span class="region-count">(${regionClusters.length})</span>
+                        </div>
+                        <div class="region-clusters ${isCollapsed ? 'collapsed' : ''}">
+                            ${regionClusters.map((cluster, index) => `
+                                <div class="cluster-card">
+                                    <div class="cluster-header">
+                                        <span class="cluster-id">${escapeHtml(cluster.clusterId || 'CLUSTER-' + (index + 1))}</span>
+                                        <div class="header-btns">
+                                            <button class="edit-btn" onclick="openEditModal('${cluster.id}')" title="编辑">✏️</button>
+                                            <button class="delete-btn" onclick="deleteCluster('${cluster.id}')" title="删除">×</button>
+                                        </div>
+                                    </div>
+                                    <div class="cluster-info">
+                                        <span class="cluster-name">${escapeHtml(cluster.name)}</span>
+                                        <span class="cluster-url">${escapeHtml(cluster.url)}</span>
+                                        ${cluster.note ? `<span class="cluster-note">${escapeHtml(cluster.note)}</span>` : ''}
+                                    </div>
+                                    <a href="${cluster.url}" class="login-btn" target="_blank" rel="noopener noreferrer" data-pwd="${btoa(encodeURIComponent(cluster.password || ''))}" onclick="return handleLogin(this)">登录入口</a>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
-                    <div class="cluster-info">
-                        <span class="cluster-name">${escapeHtml(cluster.name)}</span>
-                        <span class="cluster-url">${escapeHtml(cluster.url)}</span>
-                        ${cluster.note ? `<span class="cluster-note">${escapeHtml(cluster.note)}</span>` : ''}
-                    </div>
-                    <a href="${cluster.url}" class="login-btn" target="_blank" rel="noopener noreferrer" data-pwd="${btoa(encodeURIComponent(cluster.password || ''))}" onclick="return handleLogin(this)">登录入口</a>
-                </div>
-            `).join('');
-        }
-        
-        // 渲染集群（包含区域标签）
-        function renderClusters() {
-            renderRegionTabs();
-            renderClusterList();
+                `;
+            });
+            
+            container.innerHTML = html;
         }
         
         // HTML转义
