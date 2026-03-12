@@ -531,7 +531,7 @@
                         ` : ''}
                     </div>
                     ` : ''}
-                    <a href="javascript:void(0)" class="login-btn" data-url="${escapeHtml(cluster.url)}" data-pwd="${btoa(cluster.password || '')}" onclick="handleLogin(this)">登录入口</a>
+                    <a href="${escapeHtml(cluster.url)}" class="login-btn" target="_blank" rel="noopener noreferrer" data-pwd="${btoa(cluster.password || '')}" onclick="return handleLogin(this)">登录入口</a>
                 </div>
             `).join('');
         }
@@ -646,35 +646,26 @@
         
         // 处理登录跳转
         function handleLogin(btn) {
-            const url = btn.getAttribute('data-url');
+            const url = btn.getAttribute('href');
             const pwdBase64 = btn.getAttribute('data-pwd');
             const password = pwdBase64 ? atob(pwdBase64) : '';
             
             // 验证URL
-            if (!url || url === 'undefined' || url === 'null') {
+            if (!url || url === 'undefined' || url === 'null' || url === 'javascript:void(0)') {
                 showToast('请先配置登录地址');
-                return;
-            }
-            try {
-                new URL(url);
-            } catch (e) {
-                showToast('登录地址格式无效');
-                return;
+                return false; // 阻止链接跳转
             }
             
+            // 如果有密码，先复制到剪贴板
             if (password) {
                 navigator.clipboard.writeText(password).then(() => {
-                    showToast('密码已复制，即将跳转...');
-                    setTimeout(() => {
-                        window.open(url, '_blank', 'noopener,noreferrer');
-                    }, 500);
+                    showToast('密码已复制到剪贴板');
                 }).catch(() => {
-                    // 复制失败，直接跳转
-                    window.open(url, '_blank', 'noopener,noreferrer');
+                    showToast('密码复制失败，请手动复制');
                 });
-            } else {
-                window.open(url, '_blank', 'noopener,noreferrer');
             }
+            
+            return true; // 允许链接跳转
         }
         
         // 导出数据
