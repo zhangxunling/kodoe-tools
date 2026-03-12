@@ -531,7 +531,7 @@
                         ` : ''}
                     </div>
                     ` : ''}
-                    <a href="${escapeHtml(cluster.url)}" class="login-btn" target="_blank" rel="noopener noreferrer" data-pwd="${btoa(cluster.password || '')}" onclick="return handleLogin(this)">登录入口</a>
+                    <a href="${cluster.url}" class="login-btn" target="_blank" rel="noopener noreferrer" data-pwd="${btoa(cluster.password || '')}" onclick="return handleLogin(this)">登录入口</a>
                 </div>
             `).join('');
         }
