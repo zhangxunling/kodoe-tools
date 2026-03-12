@@ -37,9 +37,35 @@
         .header-actions {
             display: flex;
             justify-content: center;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
             gap: 12px;
             flex-wrap: wrap;
+        }
+        .region-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .region-tab {
+            padding: 8px 20px;
+            border: 1px solid #d1d5db;
+            border-radius: 20px;
+            background: #fff;
+            color: #64748b;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .region-tab:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+        .region-tab.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: #fff;
         }
         .btn {
             padding: 12px 24px;
@@ -385,6 +411,11 @@
             <button class="btn btn-secondary" onclick="importData()">导入数据</button>
         </div>
         
+        <!-- 区域标签页 -->
+        <div class="region-tabs" id="region-tabs">
+            <button class="region-tab active" data-region="all" onclick="switchRegion('all')">全部</button>
+        </div>
+        
         <div class="cluster-grid" id="cluster-grid">
             <!-- 集群卡片将动态生成 -->
         </div>
@@ -406,8 +437,13 @@
             <form id="cluster-form">
                 <input type="hidden" id="edit-id">
                 <div class="form-group">
+                    <label>区域 *</label>
+                    <input type="text" id="cluster-region" placeholder="例如：北京、上海、广州" required list="region-list">
+                    <datalist id="region-list"></datalist>
+                </div>
+                <div class="form-group">
                     <label>集群名称 *</label>
-                    <input type="text" id="cluster-name" placeholder="例如：生产环境-北京" required>
+                    <input type="text" id="cluster-name" placeholder="例如：生产环境" required>
                 </div>
                 <div class="form-group">
                     <label>集群ID</label>
@@ -445,6 +481,7 @@
 
     <script>
         const STORAGE_KEY = 'ecloud-clusters';
+        let currentRegion = 'all';
         
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
@@ -463,23 +500,61 @@
             renderClusters();
         }
         
-        // 渲染集群列表
-        function renderClusters() {
+        // 获取所有区域
+        function getRegions() {
             const clusters = getClusters();
+            const regions = [...new Set(clusters.map(c => c.region).filter(Boolean))];
+            return regions.sort();
+        }
+        
+        // 切换区域
+        function switchRegion(region) {
+            currentRegion = region;
+            // 更新标签页状态
+            document.querySelectorAll('.region-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.region === region);
+            });
+            renderClusterList();
+        }
+        
+        // 渲染区域标签页
+        function renderRegionTabs() {
+            const regions = getRegions();
+            const tabsContainer = document.getElementById('region-tabs');
+            
+            let html = `<button class="region-tab ${currentRegion === 'all' ? 'active' : ''}" data-region="all" onclick="switchRegion('all')">全部</button>`;
+            regions.forEach(region => {
+                html += `<button class="region-tab ${currentRegion === region ? 'active' : ''}" data-region="${escapeHtml(region)}" onclick="switchRegion('${escapeHtml(region)}')">${escapeHtml(region)}</button>`;
+            });
+            
+            tabsContainer.innerHTML = html;
+            
+            // 更新区域下拉建议
+            const datalist = document.getElementById('region-list');
+            datalist.innerHTML = regions.map(r => `<option value="${escapeHtml(r)}">`).join('');
+        }
+        
+        // 渲染集群列表
+        function renderClusterList() {
+            const clusters = getClusters();
+            const filteredClusters = currentRegion === 'all' 
+                ? clusters 
+                : clusters.filter(c => c.region === currentRegion);
+            
             const grid = document.getElementById('cluster-grid');
             const emptyState = document.getElementById('empty-state');
             const countEl = document.getElementById('cluster-count');
             
             countEl.textContent = `共 ${clusters.length} 个集群`;
             
-            if (clusters.length === 0) {
+            if (filteredClusters.length === 0) {
                 grid.innerHTML = '';
                 emptyState.style.display = 'block';
                 return;
             }
             
             emptyState.style.display = 'none';
-            grid.innerHTML = clusters.map((cluster, index) => `
+            grid.innerHTML = filteredClusters.map((cluster, index) => `
                 <div class="cluster-card">
                     <div class="cluster-header">
                         <span class="cluster-id">${escapeHtml(cluster.clusterId || 'CLUSTER-' + (index + 1))}</span>
@@ -496,6 +571,12 @@
                     <a href="${cluster.url}" class="login-btn" target="_blank" rel="noopener noreferrer" data-pwd="${btoa(encodeURIComponent(cluster.password || ''))}" onclick="return handleLogin(this)">登录入口</a>
                 </div>
             `).join('');
+        }
+        
+        // 渲染集群（包含区域标签）
+        function renderClusters() {
+            renderRegionTabs();
+            renderClusterList();
         }
         
         // HTML转义
@@ -524,6 +605,7 @@
             
             document.getElementById('modal-title').textContent = '编辑集群';
             document.getElementById('edit-id').value = id;
+            document.getElementById('cluster-region').value = cluster.region || '';
             document.getElementById('cluster-name').value = cluster.name;
             document.getElementById('cluster-id').value = cluster.clusterId || '';
             document.getElementById('cluster-url').value = cluster.url;
@@ -545,6 +627,7 @@
             const editId = document.getElementById('edit-id').value;
             const cluster = {
                 id: editId || Date.now().toString(),
+                region: document.getElementById('cluster-region').value.trim(),
                 name: document.getElementById('cluster-name').value.trim(),
                 clusterId: document.getElementById('cluster-id').value.trim(),
                 url: document.getElementById('cluster-url').value.trim(),
