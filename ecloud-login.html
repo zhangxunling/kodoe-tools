@@ -519,8 +519,8 @@
                         <div class="cred-row">
                             <span class="cred-label">密码:</span>
                             <span class="cred-value" id="pwd-${cluster.id}">••••••••</span>
-                            <button class="toggle-pwd-btn" data-pwd="${btoa(cluster.password || '')}" onclick="togglePwd(this, '${cluster.id}')" title="显示/隐藏">👁</button>
-                            <button class="copy-btn" data-pwd="${btoa(cluster.password || '')}" onclick="copyPwd(this)" title="复制">复制</button>
+                            <button class="toggle-pwd-btn" data-pwd="${btoa(encodeURIComponent(cluster.password || ''))}" onclick="togglePwd(this, '${cluster.id}')" title="显示/隐藏">👁</button>
+                            <button class="copy-btn" data-pwd="${btoa(encodeURIComponent(cluster.password || ''))}" onclick="copyPwd(this)" title="复制">复制</button>
                         </div>
                         ` : ''}
                         ${cluster.note ? `
@@ -531,7 +531,7 @@
                         ` : ''}
                     </div>
                     ` : ''}
-                    <a href="${cluster.url}" class="login-btn" target="_blank" rel="noopener noreferrer" data-pwd="${btoa(cluster.password || '')}" onclick="return handleLogin(this)">登录入口</a>
+                    <a href="${cluster.url}" class="login-btn" target="_blank" rel="noopener noreferrer" data-pwd="${btoa(encodeURIComponent(cluster.password || ''))}" onclick="return handleLogin(this)">登录入口</a>
                 </div>
             `).join('');
         }
@@ -627,7 +627,8 @@
         
         // 复制密码 (从data属性读取)
         function copyPwd(btn) {
-            const pwd = btn.getAttribute('data-pwd');
+            const pwdBase64 = btn.getAttribute('data-pwd');
+            const pwd = pwdBase64 ? decodeURIComponent(atob(pwdBase64)) : '';
             copyText(pwd);
         }
         
@@ -635,7 +636,7 @@
         function togglePwd(btn, id) {
             const el = document.getElementById('pwd-' + id);
             const pwdBase64 = btn.getAttribute('data-pwd');
-            const pwd = pwdBase64 ? atob(pwdBase64) : '';
+            const pwd = pwdBase64 ? decodeURIComponent(atob(pwdBase64)) : '';
             if (el.textContent === '••••••••') {
                 el.textContent = pwd;
                 btn.textContent = '🙈';
@@ -649,7 +650,7 @@
         function handleLogin(btn) {
             const url = btn.getAttribute('href');
             const pwdBase64 = btn.getAttribute('data-pwd');
-            const password = pwdBase64 ? atob(pwdBase64) : '';
+            const password = pwdBase64 ? decodeURIComponent(atob(pwdBase64)) : '';
             
             // 验证URL
             if (!url || url === 'undefined' || url === 'null' || url === 'javascript:void(0)') {
