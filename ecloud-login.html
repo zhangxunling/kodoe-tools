@@ -492,9 +492,10 @@
     <div class="login-overlay" id="login-overlay">
         <div class="login-box">
             <h2>🔐 访问验证</h2>
-            <p class="subtitle" id="login-subtitle">请输入访问密码</p>
+            <p class="subtitle" id="login-subtitle">请输入用户名和密码</p>
             <p class="login-error" id="login-error">密码错误，请重试</p>
-            <input type="password" id="access-password" placeholder="输入密码" autocomplete="off">
+            <input type="text" id="access-username" placeholder="用户名" autocomplete="off">
+            <input type="password" id="access-password" placeholder="密码" autocomplete="off">
             <button class="btn btn-primary" onclick="verifyPassword()">确认</button>
         </div>
     </div>
@@ -575,6 +576,7 @@
     <script>
         const STORAGE_KEY = 'ecloud-clusters';
         const COLLAPSED_KEY = 'ecloud-collapsed-regions';
+        const ACCESS_USERNAME_KEY = 'ecloud-access-username';
         const ACCESS_PASSWORD_KEY = 'ecloud-access-password';
         const SESSION_KEY = 'ecloud-session';
         
@@ -592,50 +594,62 @@
                 return;
             }
             
+            const savedUsername = localStorage.getItem(ACCESS_USERNAME_KEY);
             const savedPassword = localStorage.getItem(ACCESS_PASSWORD_KEY);
-            if (!savedPassword) {
-                // 首次访问，设置密码
-                document.getElementById('login-subtitle').textContent = '首次访问，请设置密码';
+            if (!savedUsername || !savedPassword) {
+                // 首次访问，设置用户名和密码
+                document.getElementById('login-subtitle').textContent = '首次访问，请设置用户名和密码';
                 document.getElementById('login-overlay').classList.remove('hidden');
             } else {
-                // 需要验证密码
+                // 需要验证用户名和密码
                 document.getElementById('login-overlay').classList.remove('hidden');
             }
         }
         
-        // 验证密码
+        // 验证用户名和密码
         function verifyPassword() {
-            const input = document.getElementById('access-password');
-            const password = input.value.trim();
+            const usernameInput = document.getElementById('access-username');
+            const passwordInput = document.getElementById('access-password');
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
             const errorEl = document.getElementById('login-error');
-            const subtitleEl = document.getElementById('login-subtitle');
+            
+            if (!username) {
+                errorEl.textContent = '请输入用户名';
+                errorEl.classList.add('show');
+                usernameInput.focus();
+                return;
+            }
             
             if (!password) {
                 errorEl.textContent = '请输入密码';
                 errorEl.classList.add('show');
+                passwordInput.focus();
                 return;
             }
             
+            const savedUsername = localStorage.getItem(ACCESS_USERNAME_KEY);
             const savedPassword = localStorage.getItem(ACCESS_PASSWORD_KEY);
             
-            if (!savedPassword) {
-                // 首次设置密码
+            if (!savedUsername || !savedPassword) {
+                // 首次设置用户名和密码
+                localStorage.setItem(ACCESS_USERNAME_KEY, username);
                 localStorage.setItem(ACCESS_PASSWORD_KEY, password);
                 sessionStorage.setItem(SESSION_KEY, 'authenticated');
                 hideLoginOverlay();
                 renderClusters();
-                showToast('密码设置成功');
+                showToast('账号设置成功');
             } else {
-                // 验证密码
-                if (password === savedPassword) {
+                // 验证用户名和密码
+                if (username === savedUsername && password === savedPassword) {
                     sessionStorage.setItem(SESSION_KEY, 'authenticated');
                     hideLoginOverlay();
                     renderClusters();
                 } else {
-                    errorEl.textContent = '密码错误，请重试';
+                    errorEl.textContent = '用户名或密码错误，请重试';
                     errorEl.classList.add('show');
-                    input.value = '';
-                    input.focus();
+                    passwordInput.value = '';
+                    passwordInput.focus();
                 }
             }
         }
@@ -646,6 +660,11 @@
         }
         
         // 回车键提交
+        document.getElementById('access-username').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('access-password').focus();
+            }
+        });
         document.getElementById('access-password').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 verifyPassword();
