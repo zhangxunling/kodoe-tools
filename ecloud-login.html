@@ -416,9 +416,89 @@
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.2);
         }
+        
+        /* 登录遮罩 */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            z-index: 3000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-overlay.hidden {
+            display: none;
+        }
+        .login-box {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        .login-box h2 {
+            color: #f1f5f9;
+            margin-bottom: 8px;
+            font-size: 1.5em;
+        }
+        .login-box .subtitle {
+            color: #64748b;
+            margin-bottom: 24px;
+            font-size: 0.9em;
+        }
+        .login-box input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 1em;
+            color: #f1f5f9;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+        }
+        .login-box input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        .login-box input::placeholder {
+            color: #475569;
+        }
+        .login-box .btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 1em;
+        }
+        .login-error {
+            color: #f87171;
+            font-size: 0.85em;
+            margin-bottom: 12px;
+            display: none;
+        }
+        .login-error.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
+    <!-- 登录遮罩 -->
+    <div class="login-overlay" id="login-overlay">
+        <div class="login-box">
+            <h2>🔐 访问验证</h2>
+            <p class="subtitle" id="login-subtitle">请输入访问密码</p>
+            <p class="login-error" id="login-error">密码错误，请重试</p>
+            <input type="password" id="access-password" placeholder="输入密码" autocomplete="off">
+            <button class="btn btn-primary" onclick="verifyPassword()">确认</button>
+        </div>
+    </div>
+    
     <div class="container">
         <h1>☁️ 七牛云存储 Ecloud 聚合平台</h1>
         <p class="subtitle" id="cluster-count">共 0 个集群</p>
@@ -495,10 +575,81 @@
     <script>
         const STORAGE_KEY = 'ecloud-clusters';
         const COLLAPSED_KEY = 'ecloud-collapsed-regions';
+        const ACCESS_PASSWORD_KEY = 'ecloud-access-password';
+        const SESSION_KEY = 'ecloud-session';
         
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
-            renderClusters();
+            checkAccess();
+        });
+        
+        // 检查访问权限
+        function checkAccess() {
+            const session = sessionStorage.getItem(SESSION_KEY);
+            if (session === 'authenticated') {
+                hideLoginOverlay();
+                renderClusters();
+                return;
+            }
+            
+            const savedPassword = localStorage.getItem(ACCESS_PASSWORD_KEY);
+            if (!savedPassword) {
+                // 首次访问，设置密码
+                document.getElementById('login-subtitle').textContent = '首次访问，请设置密码';
+                document.getElementById('login-overlay').classList.remove('hidden');
+            } else {
+                // 需要验证密码
+                document.getElementById('login-overlay').classList.remove('hidden');
+            }
+        }
+        
+        // 验证密码
+        function verifyPassword() {
+            const input = document.getElementById('access-password');
+            const password = input.value.trim();
+            const errorEl = document.getElementById('login-error');
+            const subtitleEl = document.getElementById('login-subtitle');
+            
+            if (!password) {
+                errorEl.textContent = '请输入密码';
+                errorEl.classList.add('show');
+                return;
+            }
+            
+            const savedPassword = localStorage.getItem(ACCESS_PASSWORD_KEY);
+            
+            if (!savedPassword) {
+                // 首次设置密码
+                localStorage.setItem(ACCESS_PASSWORD_KEY, password);
+                sessionStorage.setItem(SESSION_KEY, 'authenticated');
+                hideLoginOverlay();
+                renderClusters();
+                showToast('密码设置成功');
+            } else {
+                // 验证密码
+                if (password === savedPassword) {
+                    sessionStorage.setItem(SESSION_KEY, 'authenticated');
+                    hideLoginOverlay();
+                    renderClusters();
+                } else {
+                    errorEl.textContent = '密码错误，请重试';
+                    errorEl.classList.add('show');
+                    input.value = '';
+                    input.focus();
+                }
+            }
+        }
+        
+        // 隐藏登录遮罩
+        function hideLoginOverlay() {
+            document.getElementById('login-overlay').classList.add('hidden');
+        }
+        
+        // 回车键提交
+        document.getElementById('access-password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                verifyPassword();
+            }
         });
         
         // 获取集群数据
