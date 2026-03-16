@@ -508,6 +508,7 @@
             <button class="btn btn-primary" onclick="openAddModal()">+ 添加集群</button>
             <button class="btn btn-secondary" onclick="exportData()">导出数据</button>
             <button class="btn btn-secondary" onclick="importData()">导入数据</button>
+            <button class="btn btn-danger" onclick="logout()">退出登录</button>
         </div>
         
         <div id="cluster-container">
@@ -657,6 +658,25 @@
         // 隐藏登录遮罩
         function hideLoginOverlay() {
             document.getElementById('login-overlay').classList.add('hidden');
+        }
+        
+        // 退出登录
+        function logout() {
+            if (!confirm('确定要退出登录吗？')) return;
+            
+            // 清除会话
+            sessionStorage.removeItem(SESSION_KEY);
+            
+            // 重置登录表单
+            document.getElementById('access-username').value = '';
+            document.getElementById('access-password').value = '';
+            document.getElementById('login-error').classList.remove('show');
+            document.getElementById('login-subtitle').textContent = '请输入用户名和密码';
+            
+            // 显示登录遮罩
+            document.getElementById('login-overlay').classList.remove('hidden');
+            
+            showToast('已退出登录');
         }
         
         // 回车键提交
