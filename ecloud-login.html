@@ -577,9 +577,11 @@
     <script>
         const STORAGE_KEY = 'ecloud-clusters';
         const COLLAPSED_KEY = 'ecloud-collapsed-regions';
-        const ACCESS_USERNAME_KEY = 'ecloud-access-username';
-        const ACCESS_PASSWORD_KEY = 'ecloud-access-password'; // 存储密码哈希
         const SESSION_KEY = 'ecloud-session';
+        
+        // 硬编码账号配置（密码: Kx9#mP2$vL）
+        const HARDCODED_USERNAME = 'admin';
+        const HARDCODED_PASSWORD_HASH = 'e030e6348736baba7afc7cdbf1d11601434682c4b62bdf2e139cd00957a0d3df';
         
         // SHA-256 哈希函数
         async function sha256(message) {
@@ -603,16 +605,8 @@
                 return;
             }
             
-            const savedUsername = localStorage.getItem(ACCESS_USERNAME_KEY);
-            const savedPasswordHash = localStorage.getItem(ACCESS_PASSWORD_KEY);
-            if (!savedUsername || !savedPasswordHash) {
-                // 首次访问，设置用户名和密码
-                document.getElementById('login-subtitle').textContent = '首次访问，请设置用户名和密码';
-                document.getElementById('login-overlay').classList.remove('hidden');
-            } else {
-                // 需要验证用户名和密码
-                document.getElementById('login-overlay').classList.remove('hidden');
-            }
+            // 显示登录界面
+            document.getElementById('login-overlay').classList.remove('hidden');
         }
         
         // 验证用户名和密码
@@ -637,32 +631,19 @@
                 return;
             }
             
-            const savedUsername = localStorage.getItem(ACCESS_USERNAME_KEY);
-            const savedPasswordHash = localStorage.getItem(ACCESS_PASSWORD_KEY);
-            
             // 计算输入密码的哈希
             const passwordHash = await sha256(password);
             
-            if (!savedUsername || !savedPasswordHash) {
-                // 首次设置用户名和密码，存储哈希值
-                localStorage.setItem(ACCESS_USERNAME_KEY, username);
-                localStorage.setItem(ACCESS_PASSWORD_KEY, passwordHash);
+            // 验证用户名和密码
+            if (username === HARDCODED_USERNAME && passwordHash === HARDCODED_PASSWORD_HASH) {
                 sessionStorage.setItem(SESSION_KEY, 'authenticated');
                 hideLoginOverlay();
                 renderClusters();
-                showToast('账号设置成功');
             } else {
-                // 验证用户名和密码哈希
-                if (username === savedUsername && passwordHash === savedPasswordHash) {
-                    sessionStorage.setItem(SESSION_KEY, 'authenticated');
-                    hideLoginOverlay();
-                    renderClusters();
-                } else {
-                    errorEl.textContent = '用户名或密码错误，请重试';
-                    errorEl.classList.add('show');
-                    passwordInput.value = '';
-                    passwordInput.focus();
-                }
+                errorEl.textContent = '用户名或密码错误，请重试';
+                errorEl.classList.add('show');
+                passwordInput.value = '';
+                passwordInput.focus();
             }
         }
         
@@ -682,7 +663,6 @@
             document.getElementById('access-username').value = '';
             document.getElementById('access-password').value = '';
             document.getElementById('login-error').classList.remove('show');
-            document.getElementById('login-subtitle').textContent = '请输入用户名和密码';
             
             // 显示登录遮罩
             document.getElementById('login-overlay').classList.remove('hidden');
