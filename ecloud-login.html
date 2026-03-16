@@ -579,15 +579,13 @@
         const COLLAPSED_KEY = 'ecloud-collapsed-regions';
         const SESSION_KEY = 'ecloud-session';
         
-        // 硬编码账号配置（密码: Kx9#mP2$vL）
-        const HARDCODED_USERNAME = 'admin';
-        const HARDCODED_PASSWORD_HASH = 'e030e6348736baba7afc7cdbf1d11601434682c4b62bdf2e139cd00957a0d3df';
-        
         // WebDAV 配置
         const DATA_URL = './data/clusters.json';
+        const AUTH_URL = './data/auth.json';
         
-        // 内存中的集群数据缓存
+        // 内存中的数据缓存
         let clustersCache = [];
+        let authConfig = null;
         
         // SHA-256 哈希函数
         async function sha256(message) {
@@ -595,6 +593,41 @@
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        
+        // 从服务器加载认证配置
+        async function loadAuthFromServer() {
+            try {
+                const response = await fetch(AUTH_URL, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (response.ok) {
+                    authConfig = await response.json();
+                    return authConfig;
+                }
+            } catch (e) {
+                console.error('加载认证配置失败:', e);
+            }
+            return null;
+        }
+        
+        // 保存认证配置到服务器
+        async function saveAuthToServer(username, passwordHash) {
+            try {
+                const response = await fetch(AUTH_URL, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, passwordHash }, null, 2)
+                });
+                if (response.ok) {
+                    authConfig = { username, passwordHash };
+                    return true;
+                }
+            } catch (e) {
+                console.error('保存认证配置失败:', e);
+            }
+            return false;
         }
         
         // 从服务器加载集群数据
@@ -648,12 +681,23 @@
         });
         
         // 检查访问权限
-        function checkAccess() {
+        async function checkAccess() {
             const session = sessionStorage.getItem(SESSION_KEY);
             if (session === 'authenticated') {
                 hideLoginOverlay();
-                loadClustersFromServer().then(() => renderClusters());
+                await loadClustersFromServer();
+                renderClusters();
                 return;
+            }
+            
+            // 加载认证配置
+            await loadAuthFromServer();
+            
+            if (!authConfig) {
+                // 首次访问，需要设置账号密码
+                document.getElementById('login-subtitle').textContent = '首次访问，请设置用户名和密码';
+            } else {
+                document.getElementById('login-subtitle').textContent = '请输入用户名和密码';
             }
             
             // 显示登录界面
@@ -685,17 +729,32 @@
             // 计算输入密码的哈希
             const passwordHash = await sha256(password);
             
-            // 验证用户名和密码
-            if (username === HARDCODED_USERNAME && passwordHash === HARDCODED_PASSWORD_HASH) {
-                sessionStorage.setItem(SESSION_KEY, 'authenticated');
-                hideLoginOverlay();
-                await loadClustersFromServer();
-                renderClusters();
+            if (!authConfig) {
+                // 首次设置用户名和密码
+                const success = await saveAuthToServer(username, passwordHash);
+                if (success) {
+                    sessionStorage.setItem(SESSION_KEY, 'authenticated');
+                    hideLoginOverlay();
+                    await loadClustersFromServer();
+                    renderClusters();
+                    showToast('账号设置成功');
+                } else {
+                    errorEl.textContent = '设置失败，请检查服务器配置';
+                    errorEl.classList.add('show');
+                }
             } else {
-                errorEl.textContent = '用户名或密码错误，请重试';
-                errorEl.classList.add('show');
-                passwordInput.value = '';
-                passwordInput.focus();
+                // 验证用户名和密码
+                if (username === authConfig.username && passwordHash === authConfig.passwordHash) {
+                    sessionStorage.setItem(SESSION_KEY, 'authenticated');
+                    hideLoginOverlay();
+                    await loadClustersFromServer();
+                    renderClusters();
+                } else {
+                    errorEl.textContent = '用户名或密码错误，请重试';
+                    errorEl.classList.add('show');
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }
             }
         }
         
