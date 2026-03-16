@@ -583,12 +583,63 @@
         const HARDCODED_USERNAME = 'admin';
         const HARDCODED_PASSWORD_HASH = 'e030e6348736baba7afc7cdbf1d11601434682c4b62bdf2e139cd00957a0d3df';
         
+        // WebDAV 配置
+        const DATA_URL = './data/clusters.json';
+        
+        // 内存中的集群数据缓存
+        let clustersCache = [];
+        
         // SHA-256 哈希函数
         async function sha256(message) {
             const msgBuffer = new TextEncoder().encode(message);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        
+        // 从服务器加载集群数据
+        async function loadClustersFromServer() {
+            try {
+                const response = await fetch(DATA_URL, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (response.ok) {
+                    clustersCache = await response.json();
+                } else {
+                    clustersCache = [];
+                }
+            } catch (e) {
+                console.error('加载集群数据失败:', e);
+                // 如果服务器加载失败，尝试从 localStorage 读取
+                const data = localStorage.getItem(STORAGE_KEY);
+                clustersCache = data ? JSON.parse(data) : [];
+            }
+            return clustersCache;
+        }
+        
+        // 保存集群数据到服务器
+        async function saveClustersToServer(clusters) {
+            try {
+                const response = await fetch(DATA_URL, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(clusters, null, 2)
+                });
+                if (response.ok) {
+                    clustersCache = clusters;
+                    return true;
+                } else {
+                    console.error('保存失败:', response.status);
+                    return false;
+                }
+            } catch (e) {
+                console.error('保存集群数据失败:', e);
+                // 保存到 localStorage 作为备份
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(clusters));
+                clustersCache = clusters;
+                return true;
+            }
         }
         
         // 初始化
@@ -601,7 +652,7 @@
             const session = sessionStorage.getItem(SESSION_KEY);
             if (session === 'authenticated') {
                 hideLoginOverlay();
-                renderClusters();
+                loadClustersFromServer().then(() => renderClusters());
                 return;
             }
             
@@ -638,6 +689,7 @@
             if (username === HARDCODED_USERNAME && passwordHash === HARDCODED_PASSWORD_HASH) {
                 sessionStorage.setItem(SESSION_KEY, 'authenticated');
                 hideLoginOverlay();
+                await loadClustersFromServer();
                 renderClusters();
             } else {
                 errorEl.textContent = '用户名或密码错误，请重试';
@@ -684,13 +736,12 @@
         
         // 获取集群数据
         function getClusters() {
-            const data = localStorage.getItem(STORAGE_KEY);
-            return data ? JSON.parse(data) : [];
+            return clustersCache;
         }
         
         // 保存集群数据
-        function saveClusters(clusters) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(clusters));
+        async function saveClusters(clusters) {
+            await saveClustersToServer(clusters);
             renderClusters();
         }
         
@@ -839,7 +890,7 @@
         }
         
         // 表单提交
-        document.getElementById('cluster-form').addEventListener('submit', (e) => {
+        document.getElementById('cluster-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const editId = document.getElementById('edit-id').value;
@@ -865,17 +916,17 @@
                 clusters.push(cluster);
             }
             
-            saveClusters(clusters);
+            await saveClusters(clusters);
             closeModal();
             showToast(editId ? '集群已更新' : '集群已添加');
         });
         
         // 删除集群
-        function deleteCluster(id) {
+        async function deleteCluster(id) {
             if (!confirm('确定要删除这个集群吗？')) return;
             
             const clusters = getClusters().filter(c => c.id !== id);
-            saveClusters(clusters);
+            await saveClusters(clusters);
             showToast('集群已删除');
         }
         
@@ -958,7 +1009,7 @@
             if (!file) return;
             
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 try {
                     const imported = JSON.parse(e.target.result);
                     if (!Array.isArray(imported)) {
@@ -979,7 +1030,7 @@
                         }
                     });
                     
-                    saveClusters(merged);
+                    await saveClusters(merged);
                     if (addedCount === 0) {
                         showToast('无新集群需要导入（可能已存在）');
                     } else {
