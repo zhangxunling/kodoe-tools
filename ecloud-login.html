@@ -623,11 +623,16 @@
                 if (response.ok) {
                     authConfig = { username, passwordHash };
                     return true;
+                } else {
+                    console.error('保存失败，HTTP状态:', response.status, response.statusText);
+                    alert('保存失败，HTTP状态: ' + response.status + ' ' + response.statusText);
+                    return false;
                 }
             } catch (e) {
                 console.error('保存认证配置失败:', e);
+                alert('保存认证配置失败: ' + e.message);
+                return false;
             }
-            return false;
         }
         
         // 从服务器加载集群数据
@@ -706,55 +711,60 @@
         
         // 验证用户名和密码
         async function verifyPassword() {
-            const usernameInput = document.getElementById('access-username');
-            const passwordInput = document.getElementById('access-password');
-            const username = usernameInput.value.trim();
-            const password = passwordInput.value;
-            const errorEl = document.getElementById('login-error');
-            
-            if (!username) {
-                errorEl.textContent = '请输入用户名';
-                errorEl.classList.add('show');
-                usernameInput.focus();
-                return;
-            }
-            
-            if (!password) {
-                errorEl.textContent = '请输入密码';
-                errorEl.classList.add('show');
-                passwordInput.focus();
-                return;
-            }
-            
-            // 计算输入密码的哈希
-            const passwordHash = await sha256(password);
-            
-            if (!authConfig) {
-                // 首次设置用户名和密码
-                const success = await saveAuthToServer(username, passwordHash);
-                if (success) {
-                    sessionStorage.setItem(SESSION_KEY, 'authenticated');
-                    hideLoginOverlay();
-                    await loadClustersFromServer();
-                    renderClusters();
-                    showToast('账号设置成功');
-                } else {
-                    errorEl.textContent = '设置失败，请检查服务器配置';
+            try {
+                const usernameInput = document.getElementById('access-username');
+                const passwordInput = document.getElementById('access-password');
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value;
+                const errorEl = document.getElementById('login-error');
+                
+                if (!username) {
+                    errorEl.textContent = '请输入用户名';
                     errorEl.classList.add('show');
+                    usernameInput.focus();
+                    return;
                 }
-            } else {
-                // 验证用户名和密码
-                if (username === authConfig.username && passwordHash === authConfig.passwordHash) {
-                    sessionStorage.setItem(SESSION_KEY, 'authenticated');
-                    hideLoginOverlay();
-                    await loadClustersFromServer();
-                    renderClusters();
-                } else {
-                    errorEl.textContent = '用户名或密码错误，请重试';
+                
+                if (!password) {
+                    errorEl.textContent = '请输入密码';
                     errorEl.classList.add('show');
-                    passwordInput.value = '';
                     passwordInput.focus();
+                    return;
                 }
+                
+                // 计算输入密码的哈希
+                const passwordHash = await sha256(password);
+                
+                if (!authConfig) {
+                    // 首次设置用户名和密码
+                    const success = await saveAuthToServer(username, passwordHash);
+                    if (success) {
+                        sessionStorage.setItem(SESSION_KEY, 'authenticated');
+                        hideLoginOverlay();
+                        await loadClustersFromServer();
+                        renderClusters();
+                        showToast('账号设置成功');
+                    } else {
+                        errorEl.textContent = '设置失败，请检查服务器配置';
+                        errorEl.classList.add('show');
+                    }
+                } else {
+                    // 验证用户名和密码
+                    if (username === authConfig.username && passwordHash === authConfig.passwordHash) {
+                        sessionStorage.setItem(SESSION_KEY, 'authenticated');
+                        hideLoginOverlay();
+                        await loadClustersFromServer();
+                        renderClusters();
+                    } else {
+                        errorEl.textContent = '用户名或密码错误，请重试';
+                        errorEl.classList.add('show');
+                        passwordInput.value = '';
+                        passwordInput.focus();
+                    }
+                }
+            } catch (e) {
+                console.error('验证过程出错:', e);
+                alert('验证过程出错: ' + e.message);
             }
         }
         
