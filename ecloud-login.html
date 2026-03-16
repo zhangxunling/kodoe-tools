@@ -578,8 +578,16 @@
         const STORAGE_KEY = 'ecloud-clusters';
         const COLLAPSED_KEY = 'ecloud-collapsed-regions';
         const ACCESS_USERNAME_KEY = 'ecloud-access-username';
-        const ACCESS_PASSWORD_KEY = 'ecloud-access-password';
+        const ACCESS_PASSWORD_KEY = 'ecloud-access-password'; // 存储密码哈希
         const SESSION_KEY = 'ecloud-session';
+        
+        // SHA-256 哈希函数
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
         
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
@@ -596,8 +604,8 @@
             }
             
             const savedUsername = localStorage.getItem(ACCESS_USERNAME_KEY);
-            const savedPassword = localStorage.getItem(ACCESS_PASSWORD_KEY);
-            if (!savedUsername || !savedPassword) {
+            const savedPasswordHash = localStorage.getItem(ACCESS_PASSWORD_KEY);
+            if (!savedUsername || !savedPasswordHash) {
                 // 首次访问，设置用户名和密码
                 document.getElementById('login-subtitle').textContent = '首次访问，请设置用户名和密码';
                 document.getElementById('login-overlay').classList.remove('hidden');
@@ -608,11 +616,11 @@
         }
         
         // 验证用户名和密码
-        function verifyPassword() {
+        async function verifyPassword() {
             const usernameInput = document.getElementById('access-username');
             const passwordInput = document.getElementById('access-password');
             const username = usernameInput.value.trim();
-            const password = passwordInput.value.trim();
+            const password = passwordInput.value;
             const errorEl = document.getElementById('login-error');
             
             if (!username) {
@@ -630,19 +638,22 @@
             }
             
             const savedUsername = localStorage.getItem(ACCESS_USERNAME_KEY);
-            const savedPassword = localStorage.getItem(ACCESS_PASSWORD_KEY);
+            const savedPasswordHash = localStorage.getItem(ACCESS_PASSWORD_KEY);
             
-            if (!savedUsername || !savedPassword) {
-                // 首次设置用户名和密码
+            // 计算输入密码的哈希
+            const passwordHash = await sha256(password);
+            
+            if (!savedUsername || !savedPasswordHash) {
+                // 首次设置用户名和密码，存储哈希值
                 localStorage.setItem(ACCESS_USERNAME_KEY, username);
-                localStorage.setItem(ACCESS_PASSWORD_KEY, password);
+                localStorage.setItem(ACCESS_PASSWORD_KEY, passwordHash);
                 sessionStorage.setItem(SESSION_KEY, 'authenticated');
                 hideLoginOverlay();
                 renderClusters();
                 showToast('账号设置成功');
             } else {
-                // 验证用户名和密码
-                if (username === savedUsername && password === savedPassword) {
+                // 验证用户名和密码哈希
+                if (username === savedUsername && passwordHash === savedPasswordHash) {
                     sessionStorage.setItem(SESSION_KEY, 'authenticated');
                     hideLoginOverlay();
                     renderClusters();
