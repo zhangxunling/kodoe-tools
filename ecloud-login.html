@@ -698,8 +698,10 @@
             // 加载认证配置
             await loadAuthFromServer();
             
-            if (!authConfig) {
+            // 检查是否有有效的认证配置（必须有 username 和 passwordHash）
+            if (!authConfig || !authConfig.username || !authConfig.passwordHash) {
                 // 首次访问，需要设置账号密码
+                authConfig = null; // 重置为 null，确保后续逻辑正确
                 document.getElementById('login-subtitle').textContent = '首次访问，请设置用户名和密码';
             } else {
                 document.getElementById('login-subtitle').textContent = '请输入用户名和密码';
