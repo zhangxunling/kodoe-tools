@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v2.2 - 七牛云存储 Ecloud 聚合平台</title>
+    <title>v2.3 - 七牛云存储 Ecloud 聚合平台</title>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -953,12 +953,11 @@
                                     <div class="cluster-header">
                                         <span class="cluster-id">${escapeHtml(cluster.clusterId || 'CLUSTER-' + (index + 1))}</span>
                                         <div class="header-btns">
-                                            <button class="edit-btn" onclick="openEditModal(${JSON.stringify(cluster.id)})" title="编辑">✏️</button>
-                                            <button class="delete-btn" onclick="deleteCluster(${JSON.stringify(cluster.id)})" title="删除">×</button>
+                                            <button class="edit-btn" onclick="openEditModal(${JSON.stringify(cluster.id)})" title="编辑">编辑</button>
+                                            <button class="delete-btn" onclick="deleteCluster(${JSON.stringify(cluster.id)})" title="删除">删除</button>
                                         </div>
                                     </div>
                                     <div class="cluster-info">
-                                        <span class="cluster-name">${escapeHtml(cluster.name)}</span>
                                         <span class="cluster-url">${escapeHtml(cluster.url)}</span>
                                         ${cluster.note ? `<span class="cluster-note">${escapeHtml(cluster.note)}</span>` : ''}
                                     </div>
@@ -967,15 +966,15 @@
                                         <div class="cred-item">
                                             <span class="cred-label">用户</span>
                                             <span class="cred-value">${escapeHtml(cluster.username)}</span>
-                                            <button class="copy-btn" onclick="copyText(${JSON.stringify(cluster.username)})" title="复制">📋</button>
+                                            <button class="copy-btn" onclick="copyText(${JSON.stringify(cluster.username)})">复制</button>
                                         </div>
                                         ` : ''}
                                         ${cluster.password ? `
                                         <div class="cred-item">
                                             <span class="cred-label">密码</span>
-                                            <span class="cred-value pwd-hidden" id="pwd-${cluster.id}">••••••••</span>
-                                            <button class="toggle-pwd-btn" onclick="togglePwdDisplay('${cluster.id}', ${JSON.stringify(cluster.password)})" title="显示/隐藏">👁</button>
-                                            <button class="copy-btn" onclick="copyText(${JSON.stringify(cluster.password)})" title="复制">📋</button>
+                                            <span class="cred-value pwd-hidden" id="pwd-${cluster.id}">********</span>
+                                            <button class="toggle-pwd-btn" onclick="togglePwdDisplay('${cluster.id}', ${JSON.stringify(cluster.password)})">显示</button>
+                                            <button class="copy-btn" onclick="copyText(${JSON.stringify(cluster.password)})">复制</button>
                                         </div>
                                         ` : ''}
                                     </div>
@@ -1123,11 +1122,11 @@
             if (el.classList.contains('pwd-hidden')) {
                 el.textContent = password;
                 el.classList.remove('pwd-hidden');
-                btn.textContent = '🙈';
+                btn.textContent = '隐藏';
             } else {
-                el.textContent = '••••••••';
+                el.textContent = '********';
                 el.classList.add('pwd-hidden');
-                btn.textContent = '👁';
+                btn.textContent = '显示';
             }
         }
         
