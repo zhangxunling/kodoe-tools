@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v2.4 - 七牛云存储 Ecloud 聚合平台</title>
+    <title>v2.5 - 七牛云存储 Ecloud 聚合平台</title>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -949,7 +949,7 @@
                         </div>
                         <div class="region-clusters ${isCollapsed ? 'collapsed' : ''}">
                             ${regionClusters.map((cluster, index) => `
-                                <div class="cluster-card" data-cluster-id="${escapeHtml(cluster.id)}" data-username="${escapeHtml(cluster.username || '')}" data-password="${escapeHtml(cluster.password || '')}">
+                                <div class="cluster-card" data-cluster-id="${escapeHtml(cluster.id)}" data-username="${safeBtoa(cluster.username || '')}" data-password="${safeBtoa(cluster.password || '')}">
                                     <div class="cluster-header">
                                         <span class="cluster-id">${escapeHtml(cluster.clusterId || 'CLUSTER-' + (index + 1))}</span>
                                         <div class="header-btns">
@@ -1118,7 +1118,8 @@
         // 从卡片 data 属性复制
         function copyFromCard(btn, field) {
             const card = btn.closest('.cluster-card');
-            const value = card.dataset[field] || '';
+            const encoded = card.dataset[field] || '';
+            const value = safeAtob(encoded);
             if (value) {
                 copyText(value);
             } else {
@@ -1130,7 +1131,8 @@
         function togglePwdFromCard(btn) {
             const card = btn.closest('.cluster-card');
             const clusterId = card.dataset.clusterId;
-            const password = card.dataset.password || '';
+            const encodedPwd = card.dataset.password || '';
+            const password = safeAtob(encodedPwd);
             const pwdEl = document.getElementById('pwd-' + clusterId);
             
             if (pwdEl.classList.contains('pwd-hidden')) {
@@ -1147,7 +1149,8 @@
         // 处理登录跳转（从卡片）
         function handleLoginFromCard(link) {
             const card = link.closest('.cluster-card');
-            const password = card.dataset.password || '';
+            const encodedPwd = card.dataset.password || '';
+            const password = safeAtob(encodedPwd);
             const url = link.getAttribute('href');
             
             if (!url || url === 'undefined' || url === 'null') {
