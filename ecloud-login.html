@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v2.6 - 七牛云存储 Ecloud 聚合平台</title>
+    <title>v2.7 - 七牛云存储 Ecloud 聚合平台</title>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -894,6 +894,12 @@
             renderClusters();
         }
         
+        // 从点击的 header 元素切换折叠
+        function toggleRegionFromHeader(header) {
+            const region = header.dataset.region;
+            toggleRegion(region);
+        }
+        
         // 获取所有区域
         function getRegions() {
             const clusters = getClusters();
@@ -942,7 +948,7 @@
                 
                 html += `
                     <div class="region-group">
-                        <div class="region-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleRegion(${JSON.stringify(region)})">
+                        <div class="region-header ${isCollapsed ? 'collapsed' : ''}" data-region="${escapeHtml(region)}" onclick="toggleRegionFromHeader(this)">
                             <span class="arrow">▼</span>
                             <span class="region-name">${escapeHtml(region)}</span>
                             <span class="region-count">(${regionClusters.length})</span>
