@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v2.3 - 七牛云存储 Ecloud 聚合平台</title>
+    <title>v2.4 - 七牛云存储 Ecloud 聚合平台</title>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -949,12 +949,12 @@
                         </div>
                         <div class="region-clusters ${isCollapsed ? 'collapsed' : ''}">
                             ${regionClusters.map((cluster, index) => `
-                                <div class="cluster-card">
+                                <div class="cluster-card" data-cluster-id="${escapeHtml(cluster.id)}" data-username="${escapeHtml(cluster.username || '')}" data-password="${escapeHtml(cluster.password || '')}">
                                     <div class="cluster-header">
                                         <span class="cluster-id">${escapeHtml(cluster.clusterId || 'CLUSTER-' + (index + 1))}</span>
                                         <div class="header-btns">
-                                            <button class="edit-btn" onclick="openEditModal(${JSON.stringify(cluster.id)})" title="编辑">编辑</button>
-                                            <button class="delete-btn" onclick="deleteCluster(${JSON.stringify(cluster.id)})" title="删除">删除</button>
+                                            <button class="edit-btn" onclick="openEditModal(this.closest('.cluster-card').dataset.clusterId)">编辑</button>
+                                            <button class="delete-btn" onclick="deleteCluster(this.closest('.cluster-card').dataset.clusterId)">删除</button>
                                         </div>
                                     </div>
                                     <div class="cluster-info">
@@ -966,19 +966,19 @@
                                         <div class="cred-item">
                                             <span class="cred-label">用户</span>
                                             <span class="cred-value">${escapeHtml(cluster.username)}</span>
-                                            <button class="copy-btn" onclick="copyText(${JSON.stringify(cluster.username)})">复制</button>
+                                            <button class="copy-btn" onclick="copyFromCard(this, 'username')">复制</button>
                                         </div>
                                         ` : ''}
                                         ${cluster.password ? `
                                         <div class="cred-item">
                                             <span class="cred-label">密码</span>
                                             <span class="cred-value pwd-hidden" id="pwd-${cluster.id}">********</span>
-                                            <button class="toggle-pwd-btn" onclick="togglePwdDisplay('${cluster.id}', ${JSON.stringify(cluster.password)})">显示</button>
-                                            <button class="copy-btn" onclick="copyText(${JSON.stringify(cluster.password)})">复制</button>
+                                            <button class="toggle-pwd-btn" onclick="togglePwdFromCard(this)">显示</button>
+                                            <button class="copy-btn" onclick="copyFromCard(this, 'password')">复制</button>
                                         </div>
                                         ` : ''}
                                     </div>
-                                    <a href="${escapeHtml(cluster.url)}" class="login-btn" target="_blank" rel="noopener noreferrer" onclick="return handleLogin(this, ${JSON.stringify(cluster.password || '')})">登录入口</a>
+                                    <a href="${escapeHtml(cluster.url)}" class="login-btn" target="_blank" rel="noopener noreferrer" onclick="return handleLoginFromCard(this)">登录入口</a>
                                 </div>
                             `).join('')}
                         </div>
@@ -1115,37 +1115,51 @@
             });
         }
         
-        // 切换密码显示/隐藏
-        function togglePwdDisplay(id, password) {
-            const el = document.getElementById('pwd-' + id);
-            const btn = el.nextElementSibling;
-            if (el.classList.contains('pwd-hidden')) {
-                el.textContent = password;
-                el.classList.remove('pwd-hidden');
+        // 从卡片 data 属性复制
+        function copyFromCard(btn, field) {
+            const card = btn.closest('.cluster-card');
+            const value = card.dataset[field] || '';
+            if (value) {
+                copyText(value);
+            } else {
+                showToast('无内容可复制');
+            }
+        }
+        
+        // 切换密码显示/隐藏（从卡片）
+        function togglePwdFromCard(btn) {
+            const card = btn.closest('.cluster-card');
+            const clusterId = card.dataset.clusterId;
+            const password = card.dataset.password || '';
+            const pwdEl = document.getElementById('pwd-' + clusterId);
+            
+            if (pwdEl.classList.contains('pwd-hidden')) {
+                pwdEl.textContent = password;
+                pwdEl.classList.remove('pwd-hidden');
                 btn.textContent = '隐藏';
             } else {
-                el.textContent = '********';
-                el.classList.add('pwd-hidden');
+                pwdEl.textContent = '********';
+                pwdEl.classList.add('pwd-hidden');
                 btn.textContent = '显示';
             }
         }
         
-        // 处理登录跳转
-        function handleLogin(btn, password) {
-            const url = btn.getAttribute('href');
+        // 处理登录跳转（从卡片）
+        function handleLoginFromCard(link) {
+            const card = link.closest('.cluster-card');
+            const password = card.dataset.password || '';
+            const url = link.getAttribute('href');
             
-            // 验证URL
-            if (!url || url === 'undefined' || url === 'null' || url === 'javascript:void(0)') {
+            if (!url || url === 'undefined' || url === 'null') {
                 showToast('请先配置登录地址');
                 return false;
             }
             
-            // 如果有密码，先复制到剪贴板
             if (password) {
                 navigator.clipboard.writeText(password).then(() => {
                     showToast('密码已复制到剪贴板');
                 }).catch(() => {
-                    showToast('密码复制失败，请手动复制');
+                    showToast('密码复制失败');
                 });
             }
             
