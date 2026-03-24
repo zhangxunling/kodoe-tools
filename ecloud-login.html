@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v2.1 - 七牛云存储 Ecloud 聚合平台</title>
+    <title>v2.2 - 七牛云存储 Ecloud 聚合平台</title>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -221,6 +221,50 @@
         }
         .cluster-creds {
             display: none;
+        }
+        .cluster-credentials {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 8px 0;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 8px;
+        }
+        .cred-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cred-item .cred-label {
+            color: #64748b;
+            font-size: 0.75em;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .cred-item .cred-value {
+            color: #475569;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.85em;
+        }
+        .cred-item .pwd-hidden {
+            letter-spacing: 2px;
+        }
+        .cred-item .copy-btn,
+        .cred-item .toggle-pwd-btn {
+            background: #f1f5f9;
+            border: none;
+            color: #64748b;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.2s;
+        }
+        .cred-item .copy-btn:hover,
+        .cred-item .toggle-pwd-btn:hover {
+            background: #e2e8f0;
+            color: #3b82f6;
         }
         .cred-row {
             display: flex;
@@ -918,7 +962,24 @@
                                         <span class="cluster-url">${escapeHtml(cluster.url)}</span>
                                         ${cluster.note ? `<span class="cluster-note">${escapeHtml(cluster.note)}</span>` : ''}
                                     </div>
-                                    <a href="${escapeHtml(cluster.url)}" class="login-btn" target="_blank" rel="noopener noreferrer" data-pwd="${escapeHtml(safeBtoa(cluster.password || ''))}" onclick="return handleLogin(this)">登录入口</a>
+                                    <div class="cluster-credentials">
+                                        ${cluster.username ? `
+                                        <div class="cred-item">
+                                            <span class="cred-label">用户</span>
+                                            <span class="cred-value">${escapeHtml(cluster.username)}</span>
+                                            <button class="copy-btn" onclick="copyText(${JSON.stringify(cluster.username)})" title="复制">📋</button>
+                                        </div>
+                                        ` : ''}
+                                        ${cluster.password ? `
+                                        <div class="cred-item">
+                                            <span class="cred-label">密码</span>
+                                            <span class="cred-value pwd-hidden" id="pwd-${cluster.id}">••••••••</span>
+                                            <button class="toggle-pwd-btn" onclick="togglePwdDisplay('${cluster.id}', ${JSON.stringify(cluster.password)})" title="显示/隐藏">👁</button>
+                                            <button class="copy-btn" onclick="copyText(${JSON.stringify(cluster.password)})" title="复制">📋</button>
+                                        </div>
+                                        ` : ''}
+                                    </div>
+                                    <a href="${escapeHtml(cluster.url)}" class="login-btn" target="_blank" rel="noopener noreferrer" onclick="return handleLogin(this, ${JSON.stringify(cluster.password || '')})">登录入口</a>
                                 </div>
                             `).join('')}
                         </div>
@@ -1055,37 +1116,29 @@
             });
         }
         
-        // 复制密码 (从data属性读取)
-        function copyPwd(btn) {
-            const pwdBase64 = btn.getAttribute('data-pwd');
-            const pwd = safeAtob(pwdBase64);
-            copyText(pwd);
-        }
-        
-        // 切换密码显示 (从data属性读取)
-        function togglePwd(btn, id) {
+        // 切换密码显示/隐藏
+        function togglePwdDisplay(id, password) {
             const el = document.getElementById('pwd-' + id);
-            const pwdBase64 = btn.getAttribute('data-pwd');
-            const pwd = safeAtob(pwdBase64);
-            if (el.textContent === '••••••••') {
-                el.textContent = pwd;
+            const btn = el.nextElementSibling;
+            if (el.classList.contains('pwd-hidden')) {
+                el.textContent = password;
+                el.classList.remove('pwd-hidden');
                 btn.textContent = '🙈';
             } else {
                 el.textContent = '••••••••';
+                el.classList.add('pwd-hidden');
                 btn.textContent = '👁';
             }
         }
         
         // 处理登录跳转
-        function handleLogin(btn) {
+        function handleLogin(btn, password) {
             const url = btn.getAttribute('href');
-            const pwdBase64 = btn.getAttribute('data-pwd');
-            const password = safeAtob(pwdBase64);
             
             // 验证URL
             if (!url || url === 'undefined' || url === 'null' || url === 'javascript:void(0)') {
                 showToast('请先配置登录地址');
-                return false; // 阻止链接跳转
+                return false;
             }
             
             // 如果有密码，先复制到剪贴板
@@ -1097,7 +1150,7 @@
                 });
             }
             
-            return true; // 允许链接跳转
+            return true;
         }
         
         // 导出数据
