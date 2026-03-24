@@ -824,7 +824,7 @@
                 
                 html += `
                     <div class="region-group">
-                        <div class="region-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleRegion('${escapeHtml(region)}')">
+                        <div class="region-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleRegion(${JSON.stringify(region)})">
                             <span class="arrow">▼</span>
                             <span class="region-name">${escapeHtml(region)}</span>
                             <span class="region-count">(${regionClusters.length})</span>
@@ -835,8 +835,8 @@
                                     <div class="cluster-header">
                                         <span class="cluster-id">${escapeHtml(cluster.clusterId || 'CLUSTER-' + (index + 1))}</span>
                                         <div class="header-btns">
-                                            <button class="edit-btn" onclick="openEditModal('${cluster.id}')" title="编辑">✏️</button>
-                                            <button class="delete-btn" onclick="deleteCluster('${cluster.id}')" title="删除">×</button>
+                                            <button class="edit-btn" onclick="openEditModal(${JSON.stringify(cluster.id)})" title="编辑">✏️</button>
+                                            <button class="delete-btn" onclick="deleteCluster(${JSON.stringify(cluster.id)})" title="删除">×</button>
                                         </div>
                                     </div>
                                     <div class="cluster-info">
@@ -844,7 +844,7 @@
                                         <span class="cluster-url">${escapeHtml(cluster.url)}</span>
                                         ${cluster.note ? `<span class="cluster-note">${escapeHtml(cluster.note)}</span>` : ''}
                                     </div>
-                                    <a href="${cluster.url}" class="login-btn" target="_blank" rel="noopener noreferrer" data-pwd="${safeBtoa(cluster.password || '')}" onclick="return handleLogin(this)">登录入口</a>
+                                    <a href="${escapeHtml(cluster.url)}" class="login-btn" target="_blank" rel="noopener noreferrer" data-pwd="${escapeHtml(safeBtoa(cluster.password || ''))}" onclick="return handleLogin(this)">登录入口</a>
                                 </div>
                             `).join('')}
                         </div>
@@ -863,6 +863,17 @@
                       .replace(/>/g, '&gt;')
                       .replace(/"/g, '&quot;')
                       .replace(/'/g, '&#039;');
+        }
+        
+        // 转义 HTML 属性值（用于 onclick 等）
+        function escapeAttr(str) {
+            if (!str) return '';
+            return str.replace(/\\/g, '\\\\')
+                      .replace(/'/g, "\\'")
+                      .replace(/"/g, '\\"')
+                      .replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;');
         }
         
         // 安全的 Base64 编码（支持 Unicode）
