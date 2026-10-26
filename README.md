@@ -7,27 +7,42 @@
 | 路径 | 说明 |
 | --- | --- |
 | `hello.py` | Python 环境与脚本执行示例，输出 `helloe`。 |
-| `ecloud-login.html` | Ecloud 集群登录导航页面。 |
+| `ecloud-login.html` | Ecloud 集群登录导航前端页面。 |
+| `ecloud_server.py` | 受密码保护的 Ecloud 集群导航服务端。 |
 
 ## 工具列表
 
-### `ecloud-login.html`
+### `ecloud-login.html` 与 `ecloud_server.py`
 
-用于集中管理 Ecloud 集群登录入口信息的本地静态页面。
+用于集中管理 Ecloud 集群登录入口信息的受认证服务。集群数据保存在服务端 SQLite 数据库，因此可由不同浏览器或主机访问同一份列表。
 
 **功能**
 
-- 添加、编辑、删除集群信息
-- 保存登录地址、用户名和密码
+- 访问密码登录，使用 `HttpOnly`、`SameSite=Strict` 会话 Cookie
+- 服务端保存集群信息，支持添加、编辑、删除、搜索、导入与导出
 - 一键复制用户名或密码
-- 导入、导出数据备份
-- 数据仅存储在当前浏览器的 `localStorage`
+- 服务默认仅监听本机；对外访问时强制要求 TLS 证书
 
-**使用方式**
+**启动方式**
 
-直接使用浏览器打开 `ecloud-login.html` 即可。
+```bash
+cd kodoe-tools
+export ECLOUD_APP_PASSWORD='请设置至少12位的强密码'
+python3 ecloud_server.py
+```
 
-> 注意：页面中的敏感信息保存于本机浏览器。请勿在共享设备或不受信任的浏览器环境中使用。
+然后访问：`http://127.0.0.1:8765/ecloud-login.html`
+
+如需在其他主机访问，必须配置 HTTPS：
+
+```bash
+python3 ecloud_server.py \
+  --host 0.0.0.0 \
+  --certfile /path/to/fullchain.pem \
+  --keyfile /path/to/privkey.pem
+```
+
+> 注意：`ecloud-data.sqlite3` 包含集群凭据，已被 `.gitignore` 排除。请设置文件权限、定期备份数据库，且不要提交数据库、密码文件、证书或私钥。
 
 ### `hello.py`
 
